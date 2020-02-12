@@ -3386,6 +3386,8 @@ static int riscv013_get_register(struct target *target,
 	int result = ERROR_OK;
 	if (rid == GDB_REGNO_PC) {
 		result = register_read(target, value, GDB_REGNO_DPC);
+		if (*value & 0x8000000000ull)
+			*value |= 0xffffff0000000000ull;
 		LOG_DEBUG("[%d] read PC from DPC: 0x%" PRIx64, target->coreid, *value);
 	} else if (rid == GDB_REGNO_PRIV) {
 		uint64_t dcsr;
@@ -3414,6 +3416,8 @@ static int riscv013_set_register(struct target *target, int hid, int rid, uint64
 		register_write_direct(target, GDB_REGNO_DPC, value);
 		uint64_t actual_value;
 		register_read_direct(target, &actual_value, GDB_REGNO_DPC);
+		if (actual_value & 0x8000000000ull)
+			actual_value |= 0xffffff0000000000ull;
 		LOG_DEBUG("[%d]   actual DPC written: 0x%016" PRIx64, target->coreid, actual_value);
 		if (value != actual_value) {
 			LOG_ERROR("Written PC (0x%" PRIx64 ") does not match read back "
